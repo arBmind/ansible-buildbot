@@ -1,32 +1,62 @@
 ---
+- name: Install APT packages
+  ansible.builtin.apt:
+    name: "{{ buildbot_master_apt_packages }}"
+    update_cache: true
+    state: latest
+    cache_valid_time: 86400
+
+- name: Install PIP buildbot
+  ansible.builtin.pip:
+    name: "{{ buildbot_master_components + (buildbot_master_www_plugins | dict2items | map(attribute='value') | list) | flatten }}"
+    break_system_packages: true
+    extra_args: "--ignore-installed"
+  notify: Restart buildbot master
+
+- name: Create systemd service
+  ansible.builtin.template:
+    src: buildbot.service.j2
+    dest: /etc/systemd/system/buildbot.service
+    mode: "644"
+
 - name: User
-  user:
+  ansible.builtin.user:
     name: '{{ buildbot_master_user }}'
     comment: 'Dedicated user to run the buildbot master'
     shell: '/bin/bash'
 
 - name: Create Master
-  command: 'buildbot create-master {{ buildbot_master_basedir }}'
+  ansible.builtin.command: 'buildbot create-master {{ buildbot_master_basedir }}'
   become: true
   become_user: '{{ buildbot_master_user }}'
   args:
     creates: '{{ buildbot_master_basedir }}/buildbot.tac'
   register: buildbot_master_create_result
-  notify:
-  - restart buildbot master
+  notify: Restart buildbot master
 
 - name: Upgrade Master
-  command: 'buildbot upgrade-master {{ buildbot_master_basedir }}'
+  ansible.builtin.command: 'buildbot upgrade-master {{ buildbot_master_basedir }}'
   become: true
   become_user: '{{ buildbot_master_user }}'
+  changed_when: true
   when: >
-    ((buildbot_master_pip_result | default({})).changed | default(False))
+    ((buildbot_master_pip_result | default({})).changed | default(false))
     and not buildbot_master_create_result.changed
-  notify:
-  - restart buildbot master
+  notify: Restart buildbot master
 
-- name: store facts
-  set_fact:
-    buildbot_master_basedir: '{{ buildbot_master_basedir }}'
-    buildbot_master_user: '{{ buildbot_master_user }}'
-  tags: [always]
+- name: Store facts | Add Facts
+  community.general.ini_file:
+    dest: "{{ ansible_facts_path }}/buildbot_master.fact"
+    section: "facts"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: "644"
+  loop:
+    - { option: buildbot_master_basedir, value: "{{ buildbot_master_basedir }}" }
+    - { option: buildbot_master_user, value: "{{ buildbot_master_user }}" }
+  tags: always
+
+- name: Store facts | Re-read
+  ansible.builtin.setup:
+    filter: ansible_local
+  tags: always

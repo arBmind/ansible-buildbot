@@ -1,7 +1,33 @@
 ---
+# version to install
+buildbot_version: '4.3.0' # or TLS
+
+buildbot_master_components:
+  - buildbot[{{ buildbot_version }}]
+  - buildbot-www
+
+# name -> pip package
+buildbot_master_www_plugins:
+  waterfall_view: buildbot-waterfall-view
+  console_view: buildbot-console-view
+
 # user for the buildbot master process
 buildbot_master_user: buildmaster
 buildbot_master_password: password
 
 # folder for configurations
 buildbot_master_basedir: '/home/{{ buildbot_master_user }}'
+
+buildbot_master_apt_packages:
+  - git # required to checkout
+  - python3-pip # required for buildbot pip
+  - python3-packaging
+  - build-essential # required for building buildbot package
+  - python3-dev # required for compiling
+  - libssl-dev # requiref for OpenSSL support
+  - libffi-dev # pyopenssl
+
+buildbot_master_pip_packages:
+  - pyopenssl
+  - jrnl
+  - uritemplate # For GitHub uploader

@@ -1,6 +1,6 @@
 ---
 - name: Kill CPU Burner
-  script: 'stop_update.ps1'
+  ansible.builtin.script: 'stop_update.ps1'
   register: buildbot_winworker_kill_result
   changed_when: >
     "Killed" in buildbot_winworker_kill_result.stdout
@@ -8,41 +8,42 @@
     '' != buildbot_winworker_kill_result.stderr
     or 0 != buildbot_winworker_kill_result.rc
   tags:
-  - winkill
+    - winkill
 
 - name: Allow Shutdown without Login
-  win_regedit:
+  ansible.windows.win_regedit:
     path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
     name: shutdownwithoutlogon
     type: dword
     data: 1
   tags: [regedit]
 
-- include: store_passwd.yml
+- name: Store Passwords
+  ansible.builtin.include_tasks: store_passwd.yml
 
 - name: Capture Version
-  script: 'win32_os_caption.ps1'
+  ansible.builtin.script: 'win32_os_caption.ps1'
   changed_when: false
   register: buildbot_win32_os_caption_result
   tags: [always]
 
 - name: Store facts
-  set_fact:
+  ansible.builtin.set_fact:
     buildbot_win32_os_caption: "{{ buildbot_win32_os_caption_result.stdout | replace('Microsoft ', '') }}"
   tags: [always]
 
 - name: Packages
-  win_chocolatey:
+  chocolatey.chocolatey.win_chocolatey:
     name: '{{ item is mapping | ternary(item.name, item) }}'
     version: '{{ item is mapping | ternary(item.version, omit) }}'
-    showlog: yes
+    showlog: true
   register: packages_result
   with_items: "{{ buildbot_winworker_choco_packages }}"
   tags:
-  - winpackages
+    - winpackages
 
 - name: PyWin32
-  script: 'install_pywin32.ps1'
+  ansible.builtin.script: 'install_pywin32.ps1'
   register: buildbot_winworker_pywin32_result
   changed_when: >
     "Installed" in buildbot_winworker_pywin32_result.stdout
@@ -50,48 +51,48 @@
     '' != buildbot_winworker_pywin32_result.stderr
     or 0 != buildbot_winworker_pywin32_result.rc
   tags:
-  - pywin32
+    - pywin32
 
 - name: Install Powershell Community Extensions
-  win_psmodule:
+  community.windows.win_psmodule:
     name: pscx
     state: present
-    allow_clobber: yes # pscx wants to install 'gcb' alias, which already exists on modern powershell
+    allow_clobber: true # pscx wants to install 'gcb' alias, which already exists on modern powershell
 
 - name: Install Buildbot Worker
-  script: 'install_buildbot_worker.ps1'
+  ansible.builtin.script: 'install_buildbot_worker.ps1'
   register: install_buildbot_worker_result
   changed_when: >
     "Installed" in install_buildbot_worker_result.stdout
 
-
 - name: Create Worker
-  script: >
+  ansible.builtin.script: >
     create_worker.ps1
     {{ buildbot_worker_basedir | replace(backslash, '/') }}
     {{ buildbot_worker_master_host }}:{{ buildbot_worker_master_port }}
     {{ buildbot_worker_name }}
     {{ generated_worker_password }}
   args:
-     creates: '{{ buildbot_worker_basedir }}/buildbot.tac'
+    creates: '{{ buildbot_worker_basedir }}/buildbot.tac'
   notify:
-  - restart buildbot winworker
-  - reconfigure buildbot master
+    - Restart buildbot winworker
+    - Reconfigure buildbot master
 
 - name: Admin
-  win_template:
+  ansible.windows.win_template:
     src: 'admin.j2'
     dest: '{{ buildbot_worker_basedir }}/info/admin'
 
 - name: Description
-  win_template:
+  ansible.windows.win_template:
     src: 'host.j2'
     dest: '{{ buildbot_worker_basedir }}/info/host'
+    force: false # note: file is finished in winworker/configure task
 
 # This step allows the default user to start background services
 # The username translation may fail, depending on whether the hostname and domain have been set correctly
 - name: Service User
-  script: service_user.ps1 '{{ buildbot_winworker_domain }}\{{ buildbot_winworker_user }}'
+  ansible.builtin.script: service_user.ps1 '{{ buildbot_winworker_domain }}\{{ buildbot_winworker_user }}'
   register: buildbot_winworker_service_user_result
   failed_when: >
     '' != buildbot_winworker_service_user_result.stderr
@@ -99,10 +100,11 @@
   changed_when: >
     'Changed' in buildbot_winworker_service_user_result.stdout
   tags:
-  - winuser
+    - winuser
 
 - name: Service
-  win_command: "buildbot_worker_windows_service.exe --startup auto --user .\\{{ buildbot_winworker_user }} --password {{ buildbot_winworker_password }} install"
+  ansible.windows.win_command: >
+    buildbot_worker_windows_service.exe --startup auto --user .\\{{ buildbot_winworker_user }} --password {{ buildbot_winworker_password }} install
   register: buildbot_winworker_service_result
   failed_when: >
     '' != buildbot_winworker_service_result.stderr
@@ -112,16 +114,15 @@
     ('Service installed' in buildbot_winworker_service_result.stdout)
 
 - name: Setting BuildBot directory in Registry
-  win_regedit:
+  ansible.windows.win_regedit:
     path: HKLM:\SYSTEM\CurrentControlSet\services\BuildBot\Parameters
     name: directories
     data: '{{ buildbot_worker_basedir }}'
   tags:
-  - regedit
-
+    - regedit
 
 - name: Folder
-  win_file:
+  ansible.windows.win_file:
     dest: "{{ item }}"
     state: directory
   with_items:
@@ -129,19 +130,18 @@
     - "{{ buildbot_worker_utilities_dir }}"
 
 - name: Create Utilities
-  win_copy:
+  ansible.windows.win_copy:
     src: 'utilities/'
-    dest: "{{ buildbot_worker_utilities_dir }}"
+    dest: "{{ buildbot_worker_utilities_dir }}"
 
 - name: Store facts
-  set_fact:
+  ansible.builtin.set_fact:
     buildbot_master_host: '{{ buildbot_master_host }}'
     buildbot_winworker_user: '{{ buildbot_winworker_user }}'
     buildbot_worker_basedir: '{{ buildbot_worker_basedir }}'
     buildbot_worker_name: '{{ buildbot_worker_name }}'
     buildbot_worker_shell: '{{ buildbot_worker_shell }}'
     buildbot_worker_prepare_dir: '{{ buildbot_worker_prepare_dir }}'
-    buildbot_worker_utilities_dir: '{{ buildbot_worker_utilities_dir }}'
+    buildbot_worker_utilities_dir: '{{ buildbot_worker_utilities_dir }}'
     buildbot_worker_platforms: '{{ buildbot_worker_platforms }}'
-    buildbot_worker_setups: []
   tags: [always]

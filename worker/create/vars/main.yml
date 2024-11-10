@@ -1,14 +1,16 @@
 ---
 buildbot_worker_apt_packages:
-- git # required to checkout git repositories
-- subversion # required to checkout svn repositories
-- python3-pip # required for buildbot pip
-- build-essential # required for building buildbot package
-- python3-dev # required for compiling
-- libssl-dev # openSSL
-- libffi-dev # pyopenssl
+  - git # required to checkout git repositories
+  - subversion # required to checkout svn repositories
+  - python3-pip # required for buildbot pip
+  - python3-packaging
+  - build-essential # required for building buildbot package
+  - python3-dev # required for compiling
+  - python-is-python3 # run authentication script
+  - libssl-dev # openSSL
+  - libffi-dev # pyopenssl
 
 buildbot_worker_pip_packages:
-- pyopenssl
-#- jrnl
-- service_identity
+  - pyopenssl
+  # - jrnl
+  - service_identity

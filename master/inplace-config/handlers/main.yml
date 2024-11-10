@@ -1,8 +1,8 @@
 ---
-- name: restart buildbot master
-  set_fact:
+- name: Restart buildbot master
+  ansible.builtin.set_fact:
     buildbot_master_restart: true
 
-- name: reconfigure buildbot master
-  set_fact:
+- name: Reconfigure buildbot master
+  ansible.builtin.set_fact:
     buildbot_master_reload: true

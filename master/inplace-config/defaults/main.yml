@@ -10,38 +10,36 @@ buildbot_master_inplace_dest: "{{ buildbot_master_basedir }}/{{ buildbot_master_
 # extra configuration folders
 buildbot_master_workers_dir: 'workers'
 buildbot_master_projects_dir: 'projects'
-buildbot_master_products_dir: 'products'
 buildbot_master_users_dir: 'users'
 buildbot_master_email_template_dir: "email_templates"
 
-# email report configuration
-buildbot_master_send_email_reports: yes
-buildbot_master_email_body_template_file: "report_mail_body.txt"
-buildbot_master_email_subject_template_file: "report_mail_subject.txt"
-
 # configurations for master.cfg
-buildbot_master_title: "HicknHack Software Buildbot"
-buildbot_master_title_url: "https://hicknhack-software.com"
+buildbot_master_title: "Inplace Buildbot"
+buildbot_master_title_url: "https://github.com"
 buildbot_master_www_port: 8020
 buildbot_master_url: "http://localhost:{{ buildbot_master_www_port }}/"
 buildbot_master_worker_port: 9989
 
-buildbot_master_email_notification_from: "buildbot@hicknhack-software.com"
-buildbot_master_email_notification_relayhost: "mail.hnhs.de"
+# emails send for all projects
+buildbot_master_send_email_reports: false
+buildbot_master_email_body_template: "{{ lookup('file', 'report_mail_body.txt.j2') }}"
+buildbot_master_email_subject_template: "{{ lookup('file', 'report_mail_subject.txt.j2') }}"
+buildbot_master_email_notification_mode: "all"
+buildbot_master_email_notification_add_logs: true
+buildbot_master_email_notification_from: "buildbot@example.com"
+buildbot_master_email_notification_relayhost: "127.0.0.1"
 buildbot_master_email_notification_smtp_port: 25
 buildbot_master_email_notification_smtp_user: "buildbot-mail-user"
 buildbot_master_email_notification_smtp_password: "buildbot-mail-password"
-buildbot_master_email_notification_mode: "all"
-buildbot_master_email_notification_add_logs: True
-buildbot_master_email_notification_use_tls: True
+buildbot_master_email_notification_use_tls: true
+buildbot_master_email_notification_use_smtps: false
 
-
+# users known to buildbot
+buildbot_master_drop_users: []
 buildbot_master_users:
-  - user: admin
+  - name: admin
     password: admin
-    roles:
-      - admin
-  - user: developer
+    capabilities: [all]
+  - name: developer
     password: developer
-    roles:
-      - developer
+    capabilities: [build, schedule]

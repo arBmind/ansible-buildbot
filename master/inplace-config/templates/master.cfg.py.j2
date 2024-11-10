@@ -11,6 +11,11 @@ import buildbot_inplace
 
 importlib.reload(buildbot_inplace)
 
+def templateContent(filename):
+	folder = '{{ buildbot_master_email_template_dir }}'
+	with open(f"{folder}/{filename}", "r") as f:
+		return f.read()
+
 c = BuildmasterConfig = InplaceConfig()
 c['protocols'] = {'pb': dict(port={{ buildbot_master_worker_port }})}
 
@@ -23,20 +28,24 @@ c.load_projects('{{ buildbot_master_projects_dir }}')
 
 mail_formatter = reporters.MessageFormatter(
 	ctx=dict(statuses=util.Results),
-	template_dir='{{ buildbot_master_email_template_dir }}',
-	template_filename='{{ buildbot_master_email_body_template_file }}',
-	subject_filename='{{ buildbot_master_email_subject_template_file}}')
-	
+	template_type='plain',
+	template=templateContent('report_mail_body.txt.j2'),
+	subject=templateContent('report_mail_subject.txt.j2'),
+	want_logs_content={{ buildbot_master_email_notification_add_logs }},)
+
+mail_generator = reporters.BuildSetStatusGenerator(
+	mode=('{{ buildbot_master_email_notification_mode }}'),
+	message_formatter=mail_formatter)
+
 mail_notifier = reporters.MailNotifier(
 	fromaddr='{{ buildbot_master_email_notification_from }}',
 	relayhost='{{ buildbot_master_email_notification_relayhost}}',
 	smtpPort={{ buildbot_master_email_notification_smtp_port }},
 	smtpUser='{{ buildbot_master_email_notification_smtp_user }}',
 	smtpPassword='{{ buildbot_master_email_notification_smtp_password }}',
-	mode='{{ buildbot_master_email_notification_mode }}',
-	messageFormatter=mail_formatter,
-	addLogs={{ buildbot_master_email_notification_add_logs }},
+	generators=[mail_generator],
 	useSmtps={{ buildbot_master_email_notification_use_smtps }})
+
 c['services'] = [mail_notifier]
 
 c['buildbotNetUsageData'] = None
@@ -48,10 +57,12 @@ c['buildbotURL'] = "{{ buildbot_master_url }}"
 
 c['www'] = {
 	'port': {{ buildbot_master_www_port }},
+	'default_page': 'console',
 	'plugins': {
-		    'waterfall_view' : True,
-		    'console_view': True
-	           }
+{% for plugin in buildbot_master_www_plugins | dict2items | map(attribute='key') | list %}
+		'{{ plugin }}': True,
+{% endfor %}
+	}
 }
 c.load_users('{{ buildbot_master_users_dir }}')
 

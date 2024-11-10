@@ -1,0 +1,38 @@
+{
+  "name": "buildbot-ansible-dev",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.override.yml"
+  ],
+  "service": "ansible",
+  "overrideCommand": true,
+  "containerUser": "root",
+  "workspaceFolder": "/etc/ansible/roles/hicknhack-software.buildbot",
+  // "capAdd": ["SYS_ADMIN", "SYS_RESOURCE"],
+  // "securityOpt": ["seccomp=unconfined", "label=disable", "apparmor=unconfined"],
+  "updateRemoteUserUID": true,
+  "postStartCommand": ".devcontainer/install_requirements.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.ansible",
+        "samuelcolvin.jinjahtml"
+      ],
+      "settings": {
+        "redhat.telemetry.enabled": false,
+        "ansible.python.interpreterPath": "/bin/python3",
+        "ansible.lightspeed.enabled": false,
+        "ansible.executionEnvironment.enabled": false,
+        "files.associations": {
+          "**/defaults/*.yml": "ansible",
+          "**/handlers/*.yml": "ansible",
+          "**/tasks/*.yml": "ansible",
+          "**/vars/*.yml": "ansible",
+          "**/templates/*.j2": "ansible-jinja",
+          "**/templates/*.py.j2": "jinja-py",
+          "**/templates/*.yml.j2": "jinja-yaml"
+        }
+      }
+    }
+  }
+}

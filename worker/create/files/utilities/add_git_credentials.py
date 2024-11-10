@@ -9,5 +9,5 @@ if not len(sys.argv) == 2:
 credentials_file = os.path.normpath(os.path.expanduser('~') + '/.git-credentials')
 credentials = sys.argv[1]
 
-with open(credentials_file, 'ab') as f:
+with open(credentials_file, 'a', encoding="utf-8") as f:
     f.write(credentials + '\n')

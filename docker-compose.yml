@@ -1,0 +1,47 @@
+name: hnh-buildbot
+
+volumes:
+  ansible-colletions:
+
+services:
+  ansible:
+    image: ghcr.io/hicknhack-software/ansible:noble-2.18.7
+    volumes:
+      - .:/etc/ansible/roles/hicknhack-software.buildbot
+      - ./tests/docker-sshkey:/root/.ssh/id_rsa
+      - ansible-colletions:/root/.ansible/collections
+    working_dir: /etc/ansible/roles/hicknhack-software.buildbot
+    command:
+      - '/bin/bash'
+      - '-c'
+      - >-
+        ansible-galaxy install -r tests/requirements.yml
+        && ansible-playbook --inventory=tests/docker-inventory.ini tests/playbook.yml
+    tty: true
+    stdin_open: true
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=false
+    links:
+      - master_vm
+      - worker_vm
+
+  master_vm: &vm
+    image: ghcr.io/hicknhack-software/ansible-target:jammy
+    privileged: true
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - ./tests/docker-sshkey.pub:/root/.ssh/authorized_keys
+    hostname: "master"
+    ports:
+      - 8008:8008
+    links:
+      - worker_vm
+
+  worker_vm:
+    <<: *vm
+    hostname: "worker1"
+    ports: []
+    links: []

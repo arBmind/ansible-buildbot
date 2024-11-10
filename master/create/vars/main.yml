@@ -1,0 +1,13 @@
+---
+buildbot_master_apt_packages:
+  - git # required to checkout
+  - python3-pip # required for buildbot pip
+  - build-essential # required for building buildbot package
+  - python3-dev # required for compiling
+  - libssl-dev # requiref for OpenSSL support
+  - libffi-dev # pyopenssl
+
+buildbot_master_pip_packages:
+  - pyopenssl
+  - jrnl
+  - uritemplate # For GitHub uploader

@@ -2,8 +2,8 @@
 backslash: '\'
 
 buildbot_winworker_choco_packages:
-- python2 # 2.7.10 includes pip for buildbot worker install
-- carbon # used to grant privileges http://get-carbon.org/
-- 7zip.commandline # used for silent pywin32 install
-- name: 'git.install' # required to get build sources
-  version: '2.17.1.2'
+  - python2 # 2.7.10 includes pip for buildbot worker install
+  - carbon # used to grant privileges http://get-carbon.org/
+  - 7zip.commandline # used for silent pywin32 install
+  - name: 'git.install' # required to get build sources
+    version: '2.17.1.2'

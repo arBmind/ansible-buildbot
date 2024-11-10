@@ -1,9 +1,8 @@
 ---
-- name: config
-  file:
+- name: Config
+  ansible.builtin.file:
     path: '{{ buildbot_master_projects_path }}/{{ project_name }}.yml'
     state: absent
   become: true
   become_user: '{{ buildbot_master_user }}'
-  notify:
-  - reconfigure buildbot master
+  notify: Reconfigure buildbot master

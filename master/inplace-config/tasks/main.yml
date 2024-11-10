@@ -1,52 +1,94 @@
 ---
 - name: Install dependencies
-  pip:
-    name: 'pyYAML'
-    executable: pip3
+  ansible.builtin.pip:
+    name:
+      - pyYAML
+      - uritemplate
+    break_system_packages: true
+    extra_args: "--ignore-installed"
 
 - name: Git checkout
-  git:
+  ansible.builtin.git:
     repo: "{{ buildbot_master_inplace_repo }}"
     version: "{{ buildbot_master_inplace_version }}"
     dest: '{{ buildbot_master_inplace_dest }}'
-    force: yes
+    force: true
   become: true
   become_user: '{{ buildbot_master_user }}'
   tags: [git]
 
 - name: Folders
-  file:
+  ansible.builtin.file:
     dest: '{{ buildbot_master_basedir }}/{{ item }}'
     state: directory
     owner: '{{ buildbot_master_user }}'
     group: '{{ buildbot_master_user }}'
+    mode: "755"
   with_items:
-  - '{{ buildbot_master_workers_dir }}'
-  - '{{ buildbot_master_projects_dir }}'
-  - '{{ buildbot_master_products_dir }}'
-  - '{{ buildbot_master_users_dir }}'
-  - '{{ buildbot_master_email_template_dir }}'
+    - '{{ buildbot_master_workers_dir }}'
+    - '{{ buildbot_master_projects_dir }}'
+    - '{{ buildbot_master_users_dir }}'
+    - '{{ buildbot_master_email_template_dir }}'
 
 - name: Create E-Mail template file
-  file:
-    dest: '{{ buildbot_master_basedir }}/{{ buildbot_master_email_template_dir }}'
-    state: directory
+  ansible.builtin.copy:
+    content: '{{ item.1 }}'
+    dest: '{{ buildbot_master_basedir }}/{{ buildbot_master_email_template_dir }}/{{ item.0 }}'
+    owner: '{{ buildbot_master_user }}'
+    group: '{{ buildbot_master_user }}'
+    mode: "600"
+  loop:
+    - ['report_mail_body.txt.j2', '{{ buildbot_master_email_body_template }}']
+    - ['report_mail_subject.txt.j2', '{{ buildbot_master_email_subject_template }}']
+  notify: Reconfigure buildbot master
+
+- name: Create Users
+  ansible.builtin.template:
+    src: 'user.yml.j2'
+    dest: '{{ buildbot_master_basedir }}/{{ buildbot_master_users_dir }}/{{ user.name }}.yml'
+    owner: '{{ buildbot_master_user }}'
+    group: '{{ buildbot_master_user }}'
+    mode: "600"
+  loop: '{{ buildbot_master_users }}'
+  loop_control:
+    loop_var: user
+  notify: Reconfigure buildbot master
+
+- name: Drop Users
+  ansible.builtin.file:
+    path: '{{ buildbot_master_basedir }}/{{ buildbot_master_users_dir }}/{{ user.name }}.yml'
+    state: 'absent'
+  loop: '{{ buildbot_master_drop_users }}'
+  loop_control:
+    loop_var: user
+  notify: Reconfigure buildbot master
 
 - name: Default Configuration
-  template:
-    src: 'master.cfg.j2'
+  ansible.builtin.template:
+    src: 'master.cfg.py.j2'
     dest: "{{ buildbot_master_basedir }}/master.cfg"
     owner: '{{ buildbot_master_user }}'
     group: '{{ buildbot_master_user }}'
-  notify:
-  - reconfigure buildbot master
+    mode: "600"
+  notify: Reconfigure buildbot master
 
-- name: store facts
-  set_fact:
-    buildbot_master_workers_dir: '{{ buildbot_master_workers_dir }}'
-    buildbot_master_projects_dir: '{{ buildbot_master_projects_dir }}'
-    buildbot_master_workers_path: '{{ buildbot_master_workers_path }}'
-    buildbot_master_projects_path: '{{ buildbot_master_projects_path }}'
-    buildbot_master_users_path: '{{ buildbot_master_users_path }}'
-    buildbot_master_worker_port: '{{ buildbot_master_worker_port }}'
-  tags: [always]
+- name: Store facts | Add Facts
+  community.general.ini_file:
+    dest: "{{ ansible_facts_path }}/buildbot_inplace.fact"
+    section: "facts"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: "644"
+  loop:
+    - { option: buildbot_master_workers_dir, value: "{{ buildbot_master_workers_dir }}" }
+    - { option: buildbot_master_projects_dir, value: "{{ buildbot_master_projects_dir }}" }
+    - { option: buildbot_master_workers_path, value: "{{ buildbot_master_workers_path }}" }
+    - { option: buildbot_master_projects_path, value: "{{ buildbot_master_projects_path }}" }
+    - { option: buildbot_master_users_path, value: "{{ buildbot_master_users_path }}" }
+    - { option: buildbot_master_worker_port, value: "{{ buildbot_master_worker_port }}" }
+  tags: always
+
+- name: Store facts | Re-read
+  ansible.builtin.setup:
+    filter: ansible_local
+  tags: always

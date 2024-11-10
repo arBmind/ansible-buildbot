@@ -6,14 +6,11 @@ A set of roles that help to deploy the buildbot integration setups.
 Requirements
 ------------
 
-* Ubuntu 14.04 (Trusty)
-* Windows 2012R2
+* Ubuntu 24.04 (Noble)
 
 Content Roles
 -------------
-
-* **master/install** install the buildbot from the git master branch
-* **master/create** create a buildbot master in a directory
+* **master/create** install and create a buildbot master in a directory
 * **master/inplace-config** install and configure the buildbot addon for inplace build configurations
 * **master/start** start the buildbot master with custom configuration
 * **master/start-inplace** start the buildbot master with the inplace configuration
@@ -63,7 +60,7 @@ License
 
 The MIT License (MIT)
 
-Copyright (c) 2015 HicknHack Software GmbH
+Copyright (c) 2024 HicknHack Software GmbH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

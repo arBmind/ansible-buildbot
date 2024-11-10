@@ -1,10 +1,10 @@
 ---
-- name: reconfigure buildbot master
-  set_fact:
+- name: Reconfigure buildbot master
+  ansible.builtin.set_fact:
     buildbot_master_reload: true
   delegate_to: '{{ buildbot_master_host }}'
 
-- name: restart buildbot winworker
-  win_service:
+- name: Restart buildbot winworker
+  ansible.windows.win_service:
     name: BuildBot
     state: restarted

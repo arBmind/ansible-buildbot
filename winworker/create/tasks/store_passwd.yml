@@ -1,25 +1,25 @@
 ---
-- name: store_passwd | facts directory
-  win_file:
+- name: Store_passwd | facts directory
+  ansible.windows.win_file:
     path: "{{ buildbot_winworker_password_path.split(backslash)[0:-1] | join(backslash) }}"
     state: directory
-    recurse: yes
+    recurse: true
 
-- name: store_passwd | read stored password
-  slurp:
+- name: Store_passwd | read stored password
+  ansible.builtin.slurp:
     src: "{{ buildbot_winworker_password_path }}"
-  failed_when: no
+  failed_when: false
   register: buildbot_read_password
   tags: [always]
 
-- name: store_passwd | Generate Worker Password
-  set_fact:
+- name: Store_passwd | Generate Worker Password
+  ansible.builtin.set_fact:
     generated_worker_password: >-
       {{ buildbot_read_password.content | b64decode if 'content' in buildbot_read_password else buildbot_worker_password }}
   tags: [always]
 
-- name: store_passwd | generated worker password
-  win_template:
+- name: Store_passwd | generated worker password
+  ansible.windows.win_template:
     dest: "{{ buildbot_winworker_password_path }}"
     src: "password.j2"
   when: generated_worker_password != ''

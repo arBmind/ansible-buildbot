@@ -1,8 +1,8 @@
 ---
 
 - name: Start
-  win_service:
+  ansible.windows.win_service:
     name: BuildBot
     state: started
   tags:
-  - winstart
+    - winstart

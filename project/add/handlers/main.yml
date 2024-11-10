@@ -1,5 +1,4 @@
 ---
-- name: reconfigure buildbot master
-  service:
-    name: "buildbot"
-    state: reloaded
+- name: Reconfigure buildbot master
+  ansible.builtin.set_fact:
+    buildbot_master_reload: true

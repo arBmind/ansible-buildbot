@@ -1,18 +1,17 @@
 ---
-
-- name: enable buildbot master
-  service:
+- name: Enable buildbot master
+  ansible.builtin.service:
     name: buildbot
-    enabled: yes
+    enabled: true
 
-- name: reload buildbot master
-  service:
+- name: Reload buildbot master
+  ansible.builtin.service:
     name: buildbot
     state: reloaded
-  when: buildbot_master_reload | default(False)
+  when: buildbot_master_reload | default(false)
 
-- name: restart buildbot master
-  service:
+- name: Restart buildbot master
+  ansible.builtin.service:
     name: buildbot
     state: restarted
-  when: buildbot_master_restart | default(False)
+  when: buildbot_master_restart | default(false)

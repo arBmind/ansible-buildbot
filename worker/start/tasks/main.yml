@@ -1,8 +1,11 @@
 ---
-- meta: flush_handlers
+- name: Flush Handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Enable Worker Service
-  service:
+  ansible.builtin.service:
     name: buildbot-worker
-    enabled: yes
-    state: "{{ 'restarted' if (buildbot_worker_restart | default(False)) else 'started' }}"
+    enabled: true
+    state: "{{ 'restarted' if (buildbot_worker_restart | default(false)) else 'started' }}"
+  retries: 2 # note: first start might fail
+  delay: 1

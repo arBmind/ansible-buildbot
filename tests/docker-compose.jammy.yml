@@ -1,0 +1,7 @@
+---
+services:
+  master_vm:
+    image: ghcr.io/hicknhack-software/ansible-target:jammy
+
+  worker_vm:
+    image: ghcr.io/hicknhack-software/ansible-target:jammy

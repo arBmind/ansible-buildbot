@@ -1,10 +1,9 @@
 ---
-- name: config
-  template:
+- name: Config
+  ansible.builtin.template:
     src: 'project.yml.j2'
     dest: '{{ buildbot_master_projects_path }}/{{ project.name }}.yml'
-    mode: 0600
+    mode: "600"
   become: true
   become_user: '{{ buildbot_master_user }}'
-  notify:
-  - reconfigure buildbot master
+  notify: Reconfigure buildbot master

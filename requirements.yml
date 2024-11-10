@@ -1,0 +1,7 @@
+---
+collections:
+  - name: community.general
+  # only needed to run on windows
+  - name: ansible.windows
+  - name: community.windows
+  - name: chocolatey.chocolatey

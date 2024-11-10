@@ -5,18 +5,21 @@ repoBranch: '{{ project.repo_branch | default("") }}'
 repoUser: '{{ project.repo_user | default("") }}'
 repoPassword: '{{ project.repo_password | default("") }}'
 repoMode: '{{ project.repo_mode | default("incremental") }}'
-repoCredentials:
-{%- for credential in project.repo_credentials %}    
+repoCredentials: {% if not project.repo_credentials | default([]) | length %}[]
+{% else %}
+
+{% for credential in project.repo_credentials | default([]) %}
   - url: '{{ credential.url }}'
     user: '{{ credential.user }}'
     password: '{{ credential.password }}'
-{%- endfor %}
+{% endfor %}
+{% endif %}
 
-{%- if "redmine_credentials" in project %}
+{% if "redmine_credentials" in project %}
 
 redmineUser: '{{ project.redmine_credentials.user }}'
 redminePassword: '{{ project.redmine_credentials.password }}'
 redmineUrl: '{{ project.redmine_credentials.url }}'
-{%- endif %}
+{% endif %}
 
 githubToken: '{{ project.github_token | default("") }}'

@@ -1,0 +1,7 @@
+---
+services:
+  maser_vm:
+    image: ghcr.io/hicknhack-software/ansible-target:noble
+
+  worker_vm:
+    image: ghcr.io/hicknhack-software/ansible-target:noble

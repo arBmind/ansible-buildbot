@@ -1,0 +1,26 @@
+---
+- name: On Buildbot Master
+  delegate_to: "{{ buildbot_master_host }}"
+  delegate_facts: true
+  tags: always
+  block:
+    - name: Load Facts
+      ansible.builtin.setup:
+
+    - name: Store Master facts
+      ansible.builtin.set_fact:
+        buildbot_master_basedir: '{{ stored_facts.buildbot_master_basedir }}'
+        buildbot_master_user: '{{ stored_facts.buildbot_master_user }}'
+      vars:
+        stored_facts: "{{ hostvars[buildbot_master_host].ansible_local.buildbot_master.facts }}"
+
+    - name: Store Inplace facts
+      ansible.builtin.set_fact:
+        buildbot_master_workers_dir: '{{ stored_facts.buildbot_master_workers_dir }}'
+        buildbot_master_projects_dir: '{{ stored_facts.buildbot_master_projects_dir }}'
+        buildbot_master_workers_path: '{{ stored_facts.buildbot_master_workers_path }}'
+        buildbot_master_projects_path: '{{ stored_facts.buildbot_master_projects_path }}'
+        buildbot_master_users_path: '{{ stored_facts.buildbot_master_users_path }}'
+        buildbot_master_worker_port: '{{ stored_facts.buildbot_master_worker_port }}'
+      vars:
+        stored_facts: "{{ hostvars[buildbot_master_host].ansible_local.buildbot_inplace.facts }}"

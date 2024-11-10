@@ -1,4 +1,0 @@
----
-- name: restart buildbot masters
-  set_fact:
-    buildbot_master_restart: true

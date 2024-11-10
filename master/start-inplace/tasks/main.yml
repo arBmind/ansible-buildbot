@@ -1,26 +1,9 @@
 ---
-- meta: flush_handlers
+- name: Flush Handlers
+  ansible.builtin.meta: flush_handlers
 
-- name: Check Restarts
-  file:
-    path: "{{ buildbot_master_path }}/restart.txt"
-    state: absent
-  register: buildbot_masters_restart_remove
-
-- name: Trigger Restarts
-  file:
-    path: "{{ buildbot_master_basedir }}/restart.txt"
-    state: touch
-  when: buildbot_masters_restart_remove.changed
-
-- name: Check for Restart
-  file:
-    path: "{{ buildbot_master_basedir }}/restart.txt"
-    state: absent
-  register: buildbot_master_restart_remove
-
-- name: restart buildbot master
-  shell: |
+- name: Restart buildbot master
+  ansible.builtin.shell: |
     set -e
     if [ -n "$(ls -A {{ buildbot_master_workers_path }})" -a -n "$(ls -A {{ buildbot_master_projects_path }})" ]; then
       buildbot restart {{ buildbot_master_basedir }} || buildbot start {{ buildbot_master_basedir }}
@@ -28,24 +11,23 @@
       echo "Not starting master buildbot, because either no workers or no projects configured!" 1>&2
       exit 1
     fi
+  changed_when: true
   become: true
   become_user: '{{ buildbot_master_user }}'
-  when: buildbot_master_restart_remove.changed
+  when: buildbot_master_restart | default(false)
 
-- name: Check for Reconfigure
-  file:
-    path: "{{ buildbot_master_basedir }}/reconfig.txt"
-    state: absent
-  register: buildbot_master_reconfig_remove
-
-- name: reconfigure buildbot master
-  shell: |
+- name: Reconfigure buildbot master
+  ansible.builtin.shell: |
     set -e
     if [ -n "$(ls -A {{ buildbot_master_workers_path }})" -a -n "$(ls -A {{ buildbot_master_projects_path }})" ]; then
       buildbot reconfig {{ buildbot_master_basedir }} || buildbot start {{ buildbot_master_basedir }}
     fi
   become: true
   become_user: '{{ buildbot_master_user }}'
-  when: >
-    buildbot_master_reconfig_remove.changed
-    and not buildbot_master_restart_remove.changed
+  changed_when: true
+  when: buildbot_master_reload | default(false) and not (buildbot_master_restart | default(false))
+
+- name: Reset facts
+  ansible.builtin.set_fact:
+    buildbot_master_reload: false
+    buildbot_master_restart: false

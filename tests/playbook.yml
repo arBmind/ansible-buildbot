@@ -1,0 +1,52 @@
+---
+- name: Install Master
+  hosts: master
+  become: true
+  vars:
+    buildbot_version: '4.3.0'
+    buildbot_master_www_port: 8008
+    buildbot_master_url: "http://127.0.0.1:{{ buildbot_master_www_port }}/"
+
+    project:
+      name: 'Demo'
+      repo_url: 'https://github.com/arBmind/Twofold-Qt.git'
+
+  roles:
+    - name: Install Master
+      role: hicknhack-software.buildbot/master/create
+    - name: Install HnH Inplace
+      role: hicknhack-software.buildbot/master/inplace-config
+    - name: Add Project
+      role: hicknhack-software.buildbot/project/add
+
+- name: Install Worker
+  hosts: worker
+  become: true
+  vars:
+    buildbot_master_group: "master"
+
+  roles:
+    - name: Install
+      role: hicknhack-software.buildbot/worker/create
+    # room for your project compiler andd other prerequisites
+    # - example-setups/qt53
+    # - example-setups/gcc49
+    # - example-setups/qt53_gcc49
+    - name: Configure
+      role: hicknhack-software.buildbot/worker/configure
+
+- name: Start master
+  hosts: master
+  gather_facts: false
+  become: true
+  roles:
+    - name: Start
+      role: hicknhack-software.buildbot/master/start-inplace
+
+- name: Start worker
+  hosts: worker
+  gather_facts: false
+  become: true
+  roles:
+    - name: Start
+      role: hicknhack-software.buildbot/worker/start

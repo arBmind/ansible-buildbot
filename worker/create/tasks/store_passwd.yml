@@ -1,26 +1,26 @@
 ---
 - name: Generate Worker Password
-  set_fact:
+  ansible.builtin.set_fact:
     generated_worker_password: >-
       {{ (((ansible_local | default({})).buildbot | default({})).facts | default({})).password | default(buildbot_worker_password) }}
   tags: [always]
 
-- name: store_facts | facts directory
-  file:
+- name: Store_facts | facts directory
+  ansible.builtin.file:
     path: "{{ ansible_facts_path }}"
     state: directory
-    recurse: yes
+    recurse: true
 
-- name: store_facts | generated worker password
-  ini_file:
+- name: Store_facts | generated worker password
+  community.general.ini_file:
     dest: "{{ ansible_facts_path }}/buildbot.fact"
-    create: yes
+    create: true
     section: "facts"
     option: "password"
     value: "{{ generated_worker_password }}"
+    mode: "644"
   when: generated_worker_password != ''
 
-- name: store_facts | re-read
-  setup:
+- name: Store_facts | re-read
+  ansible.builtin.setup:
     filter: ansible_local
-

@@ -1,10 +1,19 @@
 ---
-- name: reconfig buildbot worker
-  template:
-    src: 'worker.yml.j2'
-    dest: '{{ hostvars[buildbot_master_host].buildbot_master_workers_path }}/{{ buildbot_worker_name }}.yml'
+- name: Reconfig buildbot worker
+  delegate_to: '{{ buildbot_master_host }}'
   become: true
   become_user: '{{ hostvars[buildbot_master_host].buildbot_master_user }}'
-  delegate_to: '{{ buildbot_master_host }}'
-  notify:
-  - reconfigure buildbot master
+  ansible.builtin.template:
+    src: 'worker.yml.j2'
+    dest: '{{ hostvars[buildbot_master_host].buildbot_master_workers_path }}/{{ buildbot_worker_name }}.yml'
+    mode: "644"
+  notify: Reconfigure buildbot master
+
+- name: Extended Description
+  ansible.builtin.copy:
+    content: |
+      {{ buildbot_worker_description }}
+      Setups: {{ buildbot_worker_setups | to_json }}
+    dest: '{{ buildbot_worker_basedir }}/info/host'
+    mode: "644"
+  notify: Restart buildbot worker
